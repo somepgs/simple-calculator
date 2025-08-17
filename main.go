@@ -1,43 +1,82 @@
 package main
 
 import (
-	"bufio"
 	"errors"
-	"fmt"
-	"os"
 	"strconv"
 	"strings"
+
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/widget"
 )
 
 func main() {
-	reader := bufio.NewScanner(os.Stdin)
-	fmt.Print("Enter: <num1> <operator> <num2> (e.g. 1 + 2): ")
-	reader.Scan()
-	input := strings.Fields(reader.Text())
+	a := app.New()
+	w := a.NewWindow("Calculator")
 
-	if len(input) != 3 {
-		fmt.Println("Error: invalid input")
-		os.Exit(1)
+	display := widget.NewEntry()
+	display.SetPlaceHolder("0")
+
+	appendToDisplay := func(text string) {
+		display.SetText(display.Text + text)
 	}
 
-	num1, err1 := strconv.ParseFloat(input[0], 64)
-	if err1 != nil {
-		fmt.Println("Error: num1 is not a number")
-		os.Exit(1)
+	buttons := [][]string{
+		{"7", "8", "9", "/"},
+		{"4", "5", "6", "*"},
+		{"1", "2", "3", "-"},
+		{"0", "C", "=", "+"},
 	}
 
-	num2, err2 := strconv.ParseFloat(input[2], 64)
-	if err2 != nil {
-		fmt.Println("Error: num2 is not a number")
-		os.Exit(1)
+	grid := container.NewGridWithColumns(4)
+	for _, row := range buttons {
+		for _, btnText := range row {
+			btn := widget.NewButton(btnText, func() {
+				if btnText == "=" {
+					result, err := evaluate(display.Text)
+					if err != nil {
+						display.SetText("Error: " + err.Error())
+					} else {
+						display.SetText(strconv.FormatFloat(result, 'f', -1, 64))
+					}
+				} else if btnText == "C" {
+					display.SetText("")
+				} else {
+					appendToDisplay(btnText)
+				}
+			})
+			grid.Add(btn)
+		}
 	}
 
-	result, err := calculate(num1, num2, input[1])
+	content := container.NewVBox(display, grid)
+	w.SetContent(content)
+	w.Resize(fyne.NewSize(300, 200))
+	w.ShowAndRun()
+}
+
+func evaluate(expr string) (float64, error) {
+	expr = strings.TrimSpace(expr)
+
+	opIndex := strings.IndexAny(expr, "+-*/")
+	if opIndex == -1 || opIndex == len(expr)-1 || opIndex == 0 {
+		return 0, errors.New("invalid expression")
+	}
+
+	num1Str := expr[:opIndex]
+	op := string(expr[opIndex])
+	num2Str := expr[opIndex+1:]
+
+	num1, err := strconv.ParseFloat(num1Str, 64)
 	if err != nil {
-		fmt.Println("Error:", err)
-		os.Exit(1)
+		return 0, err
 	}
-	fmt.Println("Result:", result)
+	num2, err := strconv.ParseFloat(num2Str, 64)
+	if err != nil {
+		return 0, err
+	}
+	return calculate(num1, num2, op)
 }
 
 func calculate(num1, num2 float64, op string) (float64, error) {

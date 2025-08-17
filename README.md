@@ -1,6 +1,6 @@
 # Simple Calculator
 
-A simple command-line calculator written in Go. It supports basic operations: addition (+), subtraction (-), multiplication (*), and division (/). Handles floating-point numbers and errors like division by zero.
+A simple GUI calculator written in Go and Fyne. It supports basic operations: addition (+), subtraction (-), multiplication (*), and division (/). Handles floating-point numbers and errors like division by zero.
 
 ## Features
 - Interactive input: Enter expressions like "5 + 3" or "2.5 * 4".
